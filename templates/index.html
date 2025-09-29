@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Lecturas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Dashboard de Planillas Lectura</h1>
+
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            {% for message in messages %}
+              <div class="flash">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- Formulario de subida de archivo -->
+        <form method="POST" enctype="multipart/form-data">
+            <input type="file" name="sqlite_file" required>
+            <input type="text" name="excel_name" placeholder="Nombre del archivo Excel">
+            <button type="submit">Previsualizar</button>
+        </form>
+
+        {% if data %}
+        <!-- Tarjetas de estadísticas -->
+        <div class="stats-cards">
+            <div class="card total-cuentas">
+                <p>Total de Cuentas</p>
+                <h2>{{ total_cuentas }}</h2>
+            </div>
+            <div class="card total-incidencias">
+                <p>Total de Incidencias</p>
+                <h2>{{ total_incidencias }}</h2>
+            </div>
+            <div class="card total-observaciones">
+                <p>Total de Observaciones</p>
+                <h2>{{ total_observaciones }}</h2>
+            </div>
+        </div>
+
+        <!-- Gráfica rápida -->
+        <canvas id="statsChart" style="margin-bottom:30px;"></canvas>
+
+        <!-- Tabla de previsualización -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        {% for col in data[0].keys() %}
+                        <th>{{ col }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in data %}
+                    <tr>
+                        {% for key, value in row.items() %}
+                            {% if key == 'IncidenciaDsc' and value %}
+                                <td class="incidencia">{{ value }}</td>
+                            {% elif key == 'LectObservacionDsc' and value %}
+                                <td class="observacion">{{ value }}</td>
+                            {% elif key == 'Consumo' and value > 1000 %}
+                                <td class="consumo-alto">{{ value }}</td>
+                            {% else %}
+                                <td>{{ value }}</td>
+                            {% endif %}
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Botón de descarga -->
+        <form method="POST" action="/export">
+            <input type="hidden" name="db_path" value="{{ db_path }}">
+            <input type="hidden" name="excel_name" value="{{ excel_name }}">
+            <button type="submit">Descargar Excel</button>
+        </form>
+
+        <!-- Script de Chart.js -->
+        <script>
+        const ctx = document.getElementById('statsChart').getContext('2d');
+        const statsChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Cuentas', 'Incidencias', 'Observaciones'],
+                datasets: [{
+                    label: 'Totales',
+                    data: [{{ total_cuentas }}, {{ total_incidencias }}, {{ total_observaciones }}],
+                    backgroundColor: ['#4e73df','#f6c23e','#1cc88a']
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } } }
+        });
+        </script>
+
+        {% endif %}
+    </div>
+</body>
+</html>
+
+
+
+
