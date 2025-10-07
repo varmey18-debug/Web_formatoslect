@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administración de Usuarios</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+    />
+    <style>
+        body {
+            background-color: #f0f4f8;
+        }
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.15);
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .btn-delete {
+            background: #e74a3b;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .btn-delete:hover {
+            background: #c0392b;
+        }
+        .form-add input {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Administración de Usuarios</h2>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <h4>Usuarios existentes:</h4>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Usuario</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in usuarios %}
+                <tr>
+                    <td>{{ u }}</td>
+                    <td>
+                        {% if u != "admin" %}
+                        <form method="POST" style="display:inline;">
+                            <input type="hidden" name="delete_user" value="{{ u }}">
+                            <button type="submit" class="btn-delete">Eliminar</button>
+                        </form>
+                        {% else %}
+                        <span>—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h4>Agregar nuevo usuario:</h4>
+        <form method="POST" class="form-add d-flex">
+            <input type="text" name="new_username" class="form-control" placeholder="Usuario" required>
+            <input type="password" name="new_password" class="form-control" placeholder="Contraseña" required>
+            <button type="submit" class="btn btn-success">Agregar</button>
+        </form>
+
+        <a href="{{ url_for('index') }}" class="btn btn-primary mt-3">Volver al Dashboard</a>
+    </div>
+</body>
+</html>

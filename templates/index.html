@@ -29,6 +29,7 @@
             border-radius: 5px;
             font-size: 14px;
             transition: 0.2s;
+            margin-left: 10px;
         }
         .top-bar a:hover {
             background: #c0392b;
@@ -38,10 +39,15 @@
 <body>
     <div class="container">
 
-        <!-- 🔐 Barra de usuario y botón de cierre de sesión -->
+        <!-- 🔐 Barra de usuario y botones -->
         <div class="top-bar">
             <div class="user-info">👤 Usuario: {{ user }}</div>
-            <a href="{{ url_for('logout') }}">Cerrar sesión</a>
+            <div>
+                {% if user == "admin" %}
+                <a href="{{ url_for('usuarios') }}">Agregar Usuarios</a>
+                {% endif %}
+                <a href="{{ url_for('logout') }}">Cerrar sesión</a>
+            </div>
         </div>
 
         <h1>Dashboard de Planillas Lectura</h1>
@@ -139,3 +145,4 @@
     </div>
 </body>
 </html>
+

@@ -4,7 +4,7 @@ import sqlite3
 import os
 from werkzeug.utils import secure_filename
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-from flask_bcrypt import Bcrypt  # 🔐 para encriptar contraseñas
+from flask_bcrypt import Bcrypt
 
 app = Flask(__name__)
 app.secret_key = "secretkey123"
@@ -15,9 +15,7 @@ login_manager.init_app(app)
 login_manager.login_view = "login"
 bcrypt = Bcrypt(app)
 
-# 🔐 Usuarios (por ahora en memoria)
-# 👉 Puedes agregar más copiando una línea:
-# USERS["usuario"] = bcrypt.generate_password_hash("clave").decode("utf-8")
+# 🔐 Usuarios en memoria (puedes agregar más copiando una línea)
 USERS = {
     "admin": bcrypt.generate_password_hash("1234").decode("utf-8"),
     "rommel": bcrypt.generate_password_hash("vargas").decode("utf-8")
@@ -33,10 +31,11 @@ def load_user(user_id):
         return User(user_id)
     return None
 
-
+# 🔹 Carpeta de uploads
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+# 🔹 Query base
 QUERY_BASE = """
 SELECT lc.TomaId, lc.CuentaNro, lc.NombreCliente, lc.Direccion,
        ll.FechaHora, ll.Lectura, ll.Consumo,
@@ -54,7 +53,7 @@ def calcular_estadisticas(df):
     total_observaciones = df['LectObservacionDsc'].notna().sum()
     return total_cuentas, total_incidencias, total_observaciones
 
-# 🔐 Ruta de login
+# 🔐 Login
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -71,27 +70,7 @@ def login():
 
     return render_template("login.html")
 
-# 🔐 Ruta para agregar nuevos usuarios (solo para admin)
-@app.route("/add_user", methods=["GET", "POST"])
-@login_required
-def add_user():
-    if current_user.id != "admin":
-        flash("Solo el administrador puede agregar usuarios ⚠️", "warning")
-        return redirect(url_for("index"))
-
-    if request.method == "POST":
-        new_username = request.form["username"]
-        new_password = request.form["password"]
-
-        if new_username in USERS:
-            flash("Ese usuario ya existe ❌", "danger")
-        else:
-            USERS[new_username] = bcrypt.generate_password_hash(new_password).decode("utf-8")
-            flash(f"Usuario '{new_username}' agregado correctamente ✅", "success")
-
-    return render_template("add_user.html", user=current_user.id)
-
-# 🔐 Cerrar sesión
+# 🔐 Logout
 @app.route("/logout")
 @login_required
 def logout():
@@ -99,6 +78,7 @@ def logout():
     flash("Sesión cerrada correctamente 👋", "info")
     return redirect(url_for("login"))
 
+# 🔐 Dashboard principal
 @app.route("/", methods=["GET", "POST"])
 @login_required
 def index():
@@ -140,6 +120,7 @@ def index():
     
     return render_template("index.html", data=None, user=current_user.id)
 
+# 🔐 Exportar Excel
 @app.route("/export", methods=["POST"])
 @login_required
 def export():
@@ -159,6 +140,39 @@ def export():
         flash(f"❌ Error: {e}")
         return redirect("/")
 
+# 🔐 Gestión de usuarios (solo admin)
+@app.route("/usuarios", methods=["GET", "POST"])
+@login_required
+def usuarios():
+    if current_user.id != "admin":
+        flash("Solo el administrador puede acceder a esta sección ⚠️", "warning")
+        return redirect(url_for("index"))
 
+    if request.method == "POST":
+        # Eliminación de usuario
+        if "delete_user" in request.form:
+            username_to_delete = request.form["delete_user"]
+            if username_to_delete in USERS and username_to_delete != "admin":
+                USERS.pop(username_to_delete)
+                flash(f"Usuario '{username_to_delete}' eliminado ✅", "success")
+            else:
+                flash("No se puede eliminar este usuario ❌", "danger")
+
+        # Creación de usuario
+        elif "new_username" in request.form:
+            new_username = request.form["new_username"]
+            new_password = request.form["new_password"]
+            if new_username in USERS:
+                flash("Ese usuario ya existe ❌", "danger")
+            else:
+                USERS[new_username] = bcrypt.generate_password_hash(new_password).decode("utf-8")
+                flash(f"Usuario '{new_username}' agregado ✅", "success")
+
+    usuarios_lista = list(USERS.keys())
+    return render_template("usuarios.html", usuarios=usuarios_lista, user=current_user.id)
+
+# ✅ Arrancar app
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
+
+
