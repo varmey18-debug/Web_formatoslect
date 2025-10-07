@@ -17,7 +17,7 @@ bcrypt = Bcrypt(app)
 
 # 🔐 Usuarios en memoria (puedes agregar más copiando una línea)
 USERS = {
-    "admin": bcrypt.generate_password_hash("1234").decode("utf-8"),
+    "admin": bcrypt.generate_password_hash("Nomeolvides").decode("utf-8"),
     "rommel": bcrypt.generate_password_hash("vargas").decode("utf-8")
 }
 
